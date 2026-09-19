@@ -7,6 +7,7 @@
 #   docker build -t bunmsh-vm .
 #   docker run --rm -it bunmsh-vm                       # bunmsh on the serial console
 #   docker run --rm -it -p 8080:8080 bunmsh-vm web      # browser terminal (jsgotty)
+#   docker run --rm -it bunmsh-vm /bin/sh               # a shell in the container itself
 #
 # When 8080 is already taken on the host, Docker fails rather than picking
 # another port. Either move both sides together, or let docker/run.sh find a
@@ -170,5 +171,8 @@ ENV BUNMSH_MODE=console \
 
 EXPOSE 8080
 
+# The mode lives in CMD, so `docker run bunmsh-vm web` and
+# `docker run bunmsh-vm /bin/sh` both just replace it; the entrypoint runs any
+# first argument that names an executable instead of booting the VM.
 ENTRYPOINT ["/usr/local/bin/bunmsh-vm"]
-CMD []
+CMD ["console"]

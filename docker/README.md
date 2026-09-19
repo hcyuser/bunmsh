@@ -351,6 +351,19 @@ docker run --rm -it -p 8080:8080 bunmsh-vm web -m 4096
 docker run --rm -it -p 9000:9000 bunmsh-vm web --port 9000 -m 4096
 ```
 
+A first argument that is neither a mode nor an option, and that names an
+executable the container has, is run as-is instead of booting the VM — so the
+image behaves like any other when you want to look inside it:
+
+```sh
+docker run --rm -it bunmsh-vm /bin/sh
+docker run --rm bunmsh-vm ls /srv/bunmsh
+```
+
+The mode itself is only the image's `CMD` (`console`), so overriding it is all
+that happens here. For the rare QEMU argument that also names a command, put
+`--` first and everything after it goes to QEMU untouched.
+
 ## Speed
 
 Measured on an M-series Mac under Docker Desktop, which exposes no `/dev/kvm`

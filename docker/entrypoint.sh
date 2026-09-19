@@ -2,6 +2,13 @@
 # Boots the bunmsh guest under QEMU.
 #
 #   bunmsh-vm [console|web] [--port PORT] [extra qemu args...]
+#   bunmsh-vm <command> [args...]
+#
+# The second form is the way out of the VM: when the first argument is neither
+# a mode nor an option and names something the *container* can execute, it is
+# run as-is, so `docker run --rm -it bunmsh-vm /bin/sh` gives a shell in the
+# image instead of handing /bin/sh to QEMU. Put `--` first to force the VM and
+# pass everything after it to QEMU untouched.
 #
 # --port is the same setting as BUNMSH_PORT below, and wins over it. Note that
 # it only moves the port *inside* the container: the host side is Docker's own
@@ -43,10 +50,23 @@ BUNINU_VERSION=${BUNMSH_BUNINU_VERSION:-latest}
 MEMORY=${BUNMSH_MEMORY:-2048}
 CPUS=${BUNMSH_CPUS:-2}
 
+# `docker run bunmsh-vm /bin/sh` should give a shell in the container rather
+# than feed /bin/sh to QEMU: anything that is not one of our own words and does
+# resolve to an executable is simply run. `--` skips the check, for the rare
+# QEMU argument that also names a command.
+case "${1:-}" in
+  --) shift ;;
+  ''|-*|web|console) ;;
+  *)
+    if command -v "$1" >/dev/null 2>&1 || { [ -f "$1" ] && [ -x "$1" ]; }; then
+      exec "$@"
+    fi ;;
+esac
+
 case "${1:-}" in
   web|console) MODE=$1; shift ;;
   -h|--help)
-    sed -n '2,29p' "$0" | sed 's/^# \{0,1\}//'
+    sed -n '2,36p' "$0" | sed 's/^# \{0,1\}//'
     exit 0 ;;
 esac
 
