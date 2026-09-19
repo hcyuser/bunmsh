@@ -185,6 +185,41 @@ docker run --rm -it -p 8080:8080 bunmsh-vm
 $ PORT=8080 builtin serve /opt/bunmsh
 ```
 
+### When 8080 is already taken
+
+Docker does not pick another port for you: if something on the host already
+holds 8080, `docker run -p 8080:8080` fails with *port is already allocated*
+and that is the end of it. Three ways out, in order of convenience:
+
+```sh
+docker/run.sh web
+```
+
+`docker/run.sh` walks 8080, 8081, 8082, ... until it finds a free host port,
+then publishes that port *and* sets `BUNMSH_PORT` to the same number, so the
+URL jsgotty prints is the URL that works from the host. `BUNMSH_PORT` sets
+where the walk starts and `BUNMSH_PORT_TRIES` (10 by default) how far it goes;
+every other `BUNMSH_*` variable is passed through to the image, and anything
+after the mode goes to `docker run`.
+
+```text
+[bunmsh-run] port 8080 is in use; using 8081 instead
+```
+
+Or pick the port yourself, on both sides at once — `--port` is the image's own
+spelling of `BUNMSH_PORT`:
+
+```sh
+docker run --rm -it -p 8081:8081 bunmsh-vm web --port 8081
+```
+
+Or move only the host side and leave the guest on 8080. The printed URL then
+names the guest's port, so substitute the host's when opening it:
+
+```sh
+docker run --rm -it -p 8081:8080 bunmsh-vm web
+```
+
 ## The browser terminal
 
 `web` mode additionally starts [jsgotty](https://www.npmjs.com/package/buninu),
@@ -304,12 +339,16 @@ guest off cleanly when the shell exits.
 | `BUNMSH_MEMORY` | `2048` | Guest RAM in MiB — the whole userspace lives in it |
 | `BUNMSH_CPUS` | `2` | Guest vCPUs |
 | `BUNMSH_QEMU_EXTRA` | *(unset)* | Extra QEMU arguments |
+| `BUNMSH_PORT_TRIES` | `10` | `docker/run.sh` only: how many consecutive host ports it walks over |
+| `BUNMSH_IMAGE` | `bunmsh-vm` | `docker/run.sh` only: image to run |
+| `BUNMSH_DOCKER` | `docker` | `docker/run.sh` only: container CLI — `podman` works too |
 
-The mode can also be given as the first argument, and anything after it is
-passed to QEMU:
+The mode can also be given as the first argument, followed optionally by
+`--port PORT`; anything after that is passed to QEMU:
 
 ```sh
 docker run --rm -it -p 8080:8080 bunmsh-vm web -m 4096
+docker run --rm -it -p 9000:9000 bunmsh-vm web --port 9000 -m 4096
 ```
 
 ## Speed

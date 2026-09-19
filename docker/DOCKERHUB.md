@@ -39,6 +39,17 @@ docker run -d --name bunmsh -p 8080:8080 hcyuser/bunmsh-vm web
 docker logs bunmsh | grep -A1 listening
 ```
 
+If 8080 is already taken on the host, Docker fails with *port is already
+allocated* rather than choosing another port. Move both sides together —
+`--port` is the image's own spelling of `BUNMSH_PORT`:
+
+```sh
+docker run -d --name bunmsh -p 8081:8081 hcyuser/bunmsh-vm web --port 8081
+```
+
+The repository's `docker/run.sh` does this for you, walking 8080, 8081,
+8082, ... until it finds a free host port.
+
 ## What is inside
 
 ```text
@@ -77,6 +88,9 @@ architecture as the image.
 | `BUNMSH_MEMORY` | `2048` | Guest RAM in MiB — the whole userspace lives in it |
 | `BUNMSH_CPUS` | `2` | Guest vCPUs |
 | `BUNMSH_QEMU_EXTRA` | *(unset)* | Extra QEMU arguments |
+
+The mode can be given as the first argument, optionally followed by
+`--port PORT`; anything after that is passed to QEMU.
 
 `BUNMSH_CREDENTIAL` reaches the guest on the kernel command line, so it is
 visible to anything that can read `/proc/cmdline` in the guest.

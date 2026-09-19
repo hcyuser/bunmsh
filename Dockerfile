@@ -8,6 +8,13 @@
 #   docker run --rm -it bunmsh-vm                       # bunmsh on the serial console
 #   docker run --rm -it -p 8080:8080 bunmsh-vm web      # browser terminal (jsgotty)
 #
+# When 8080 is already taken on the host, Docker fails rather than picking
+# another port. Either move both sides together, or let docker/run.sh find a
+# free host port by walking 8080, 8081, 8082, ...:
+#
+#   docker run --rm -it -p 8081:8081 bunmsh-vm web --port 8081
+#   docker/run.sh web
+#
 # The guest runs on the same architecture as the image (x86_64 or aarch64).
 #
 # web mode needs jsgotty, which lives in the npm `buninu` package rather than

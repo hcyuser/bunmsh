@@ -1,7 +1,11 @@
 #!/bin/sh
 # Boots the bunmsh guest under QEMU.
 #
-#   bunmsh-vm [console|web] [extra qemu args...]
+#   bunmsh-vm [console|web] [--port PORT] [extra qemu args...]
+#
+# --port is the same setting as BUNMSH_PORT below, and wins over it. Note that
+# it only moves the port *inside* the container: the host side is Docker's own
+# -p, so the two have to agree (docker/run.sh picks a free pair for you).
 #
 # Everything else comes from the environment:
 #   BUNMSH_MODE=console|web     both give bunmsh as PID 1 on the container's
@@ -42,8 +46,24 @@ CPUS=${BUNMSH_CPUS:-2}
 case "${1:-}" in
   web|console) MODE=$1; shift ;;
   -h|--help)
-    sed -n '2,26p' "$0" | sed 's/^# \{0,1\}//'
+    sed -n '2,29p' "$0" | sed 's/^# \{0,1\}//'
     exit 0 ;;
+esac
+
+# --port is read here rather than left to QEMU: it is the same knob as
+# BUNMSH_PORT, in the spelling that is quicker to type on a `docker run` line.
+# Everything after it still goes to QEMU untouched.
+while :; do
+  case "${1:-}" in
+    --port) [ $# -ge 2 ] || { echo "bunmsh-vm: --port needs a value" >&2; exit 2; }
+            PORT=$2; shift 2 ;;
+    --port=*) PORT=${1#*=}; shift ;;
+    *) break ;;
+  esac
+done
+
+case "$PORT" in
+  ''|*[!0-9]*) echo "bunmsh-vm: invalid port: $PORT" >&2; exit 2 ;;
 esac
 
 arch=$(uname -m)
